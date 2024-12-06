@@ -1,0 +1,162 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Hotels Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4 text-center">Hotels Dashboard</h1>
+    <div class="card">
+        <div class="card-header">
+            Hotels
+        </div>
+        <div class="card-body">
+            <table class="table table-hover table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">City</th>
+                        <th scope="col">Class</th>
+                        <th scope="col">Price</th>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% if hotels %}
+                    {% for hotel in page_obj %}
+                    <tr>
+                        <th scope="row">{{ hotel.id }}</th>
+                        <td>{{ hotel.name }}</td>
+                        <td>{{ hotel.city }}</td>
+                        <td>{{ hotel.hotelClass }}</td>
+                        <td>{{ hotel.price }}</td>
+                        <td><a href="{% url 'blog:hotel_edit' id=hotel.id %}" class="btn btn-primary">Edit</a></td>
+                        <td><a href="{% url 'blog:hotel_detail_admin' id=hotel.id %}" class="btn btn-outline-secondary">View</a></td>
+                        <td><a href="{% url 'blog:hotel_delete' id=hotel.id %}" class="btn btn-danger">Delete</a></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <div>Hotels are not available!</div>
+                {% endif %}
+                </tbody>
+            </table>
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+            
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+            
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <h2 class="text-center w-100">Hotel Analytics</h2>
+        <div class="col-md-6 my-3">
+            <canvas id="donutChart"></canvas>
+        </div>
+        <div class="col-md-6 my-3">
+            <canvas id="barGradientChart"></canvas>
+        </div>
+        <div class="col-md-6 my-3">
+            <canvas id="radarChart"></canvas>
+        </div>
+        <div class="col-md-6 my-3">
+            <canvas id="polarAreaChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js"></script>
+<script>
+    const tableRows = document.querySelectorAll("table tbody tr");
+    const labels = [];
+    const cities = [];
+    const classes = [];
+    const prices = [];
+
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length > 0) {
+            labels.push(cells[0].textContent.trim()); 
+            cities.push(cells[1].textContent.trim()); 
+            classes.push(parseInt(cells[2].textContent.trim(), 10)); 
+            prices.push(parseFloat(cells[3].textContent.trim())); 
+        }
+    });
+    const donutCtx = document.getElementById('donutChart').getContext('2d');
+    new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Hotel Classes',
+                data: classes,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#FF5722'],
+            }]
+        }
+    });
+    const barGradientCtx = document.getElementById('barGradientChart').getContext('2d');
+    const gradient = barGradientCtx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, '#FF6384');
+    gradient.addColorStop(1, '#36A2EB');
+    new Chart(barGradientCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Prices',
+                data: prices,
+                backgroundColor: gradient
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    const radarCtx = document.getElementById('radarChart').getContext('2d');
+    new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Hotel Classes',
+                data: classes,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+            }]
+        }
+    });
+    const polarCtx = document.getElementById('polarAreaChart').getContext('2d');
+    new Chart(polarCtx, {
+        type: 'polarArea',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Hotel Prices',
+                data: prices,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#FF5722']
+            }]
+        }
+    });
+</script>
+{% endblock %}

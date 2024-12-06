@@ -1,0 +1,151 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}
+    Hotel Orders Dashboard
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4 text-center">Hotel Orders Dashboard</h2>
+    <div class="card">
+        <div class="card-header">
+            Hotel Orders
+        </div>
+        <div class="card-body">
+            {% if orders %}
+            <table class="table table-hover table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">City</th>
+                        <th scope="col">Class</th>
+                        <th scope="col">Price</th>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <th scope="col">{{ order.id }}</th>
+                        <td>{{ order.hotel.name }}</td>
+                        <td>{{ order.hotel.city }}</td>
+                        <td>{{ order.hotel.hotelClass }}</td>
+                        <td>{{ order.hotel.price }}</td>
+                        <td><a href="#" class="btn btn-primary">Payment</a></td>
+                        <td><a href="{% url 'blog:orderHotelDelete' id=order.id %}" class="btn btn-outline-danger">Delete</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-warning d-flex justify-content-center">Orders are not available!</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row mt-5">
+        <h3 class="text-center w-100">Hotel Orders Analytics</h3>
+        <div class="col-md-6 my-3">
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div class="col-md-6 my-3">
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="col-md-6 my-3">
+            <canvas id="horizontalBarChart"></canvas>
+        </div>
+        <div class="col-md-6 my-3">
+            <canvas id="scatterChart"></canvas>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js"></script>
+<script>
+    const tableRows = document.querySelectorAll("table tbody tr");
+    const labels = [];
+    const cities = [];
+    const classes = [];
+    const prices = [];
+
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length > 0) {
+            labels.push(cells[0].textContent.trim());
+            cities.push(cells[1].textContent.trim());
+            classes.push(parseInt(cells[2].textContent.trim(), 10));
+            prices.push(parseFloat(cells[3].textContent.trim()));
+        }
+    });
+
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Prices',
+                data: prices,
+                borderColor: '#36A2EB',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: cities,
+            datasets: [{
+                label: 'Cities',
+                data: prices,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#FF5722']
+            }]
+        }
+    });
+    const horizontalBarCtx = document.getElementById('horizontalBarChart').getContext('2d');
+    new Chart(horizontalBarCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Classes',
+                data: classes,
+                backgroundColor: '#FF6384'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true
+        }
+    });
+    const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+    const scatterData = labels.map((label, index) => {
+        return { x: classes[index], y: prices[index] };
+    });
+
+    new Chart(scatterCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Price vs Class',
+                data: scatterData,
+                backgroundColor: '#36A2EB',
+                borderColor: '#FF6384',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            scales: {
+                x: { title: { display: true, text: 'Class' } },
+                y: { title: { display: true, text: 'Price' } }
+            },
+            responsive: true
+        }
+    });
+</script>
+{% endblock %}
